@@ -4,9 +4,12 @@ import io.github.milton2003afg.taskmanagerapi.exception.InvalidCredentialsExcept
 import io.github.milton2003afg.taskmanagerapi.exception.ResourceNotFoundException;
 import io.github.milton2003afg.taskmanagerapi.exception.UserAlreadyExistsException;
 import io.github.milton2003afg.taskmanagerapi.exception.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,7 +21,9 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    private ProblemDetail builProblemDetail(HttpStatus httpStatus,String title , String detail){
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private ProblemDetail builProblemDetail(HttpStatus httpStatus, String title , String detail){
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 httpStatus,
                 detail
@@ -56,6 +61,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleInternalServerError(Exception ex){
+        log.error(String.valueOf(ex));
         return builProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "Internal server error");
     }
 
@@ -72,5 +78,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleResourceNotFound(ResourceNotFoundException ex){
         return builProblemDetail(HttpStatus.NOT_FOUND, "Resource Not Found", "The resource was not found");
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleHttpMessageNotReadable(HttpMessageNotReadableException ex){
+        return builProblemDetail(HttpStatus.BAD_REQUEST, "Bad Request", "Malformed request body");
     }
 }
