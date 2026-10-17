@@ -1,0 +1,2 @@
+ALTER TABLE tasks
+    ALTER COLUMN due_date TYPE TIMESTAMP;
