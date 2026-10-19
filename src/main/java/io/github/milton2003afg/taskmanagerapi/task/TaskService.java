@@ -27,7 +27,6 @@ public class TaskService {
     }
 
     public TaskResponse getByTaskId(Long taskId, Long projectId, Long ownerId){
-        projectRepository.findByIdAndOwnerId(projectId, ownerId).orElseThrow(() -> new ResourceNotFoundException("The project does not exist"));
         return TaskResponse.from(taskRepository.findByIdAndProjectIdAndProjectOwnerId(taskId, projectId, ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("The task does not exist")));
     }

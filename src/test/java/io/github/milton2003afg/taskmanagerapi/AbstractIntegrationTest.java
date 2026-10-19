@@ -10,6 +10,7 @@ import com.jayway.jsonpath.JsonPath;
 import org.springframework.http.MediaType;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
@@ -43,7 +44,37 @@ public abstract class AbstractIntegrationTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-
         return JsonPath.read(response, "$.accessToken");
+    }
+
+    protected Integer createProject(String token, String name) throws Exception{
+        String request = """
+                {"name":"%s"}
+                """.formatted(name);
+        String response = mockMvc.perform(post("/projects")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return JsonPath.read(response, "$.id");
+    }
+
+    protected Integer createTask(String token, long projectId, String title) throws Exception{
+        String request = """
+                {"title":"%s"}
+                """.formatted(title);
+        String response = mockMvc.perform(post("/projects/{projectId}/tasks", projectId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)
+                .header("Authorization", "Bearer " + token))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return JsonPath.read(response, "$.id");
     }
 }
