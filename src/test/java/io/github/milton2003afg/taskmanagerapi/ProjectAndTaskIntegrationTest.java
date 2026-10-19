@@ -49,6 +49,10 @@ public class ProjectAndTaskIntegrationTest extends AbstractIntegrationTest{
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
+
+        mockMvc.perform(get("/projects/{idProject}/tasks/stats", idProjectA)
+                .header("Authorization", "Bearer " + tokenB))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -81,5 +85,38 @@ public class ProjectAndTaskIntegrationTest extends AbstractIntegrationTest{
                 .andExpect(jsonPath("$.description").value("Description for task"))
                 .andExpect(jsonPath("$.status").value("DOING"))
                 .andExpect(jsonPath("$.dueDate").value("2026-12-31T18:00:00"));
+    }
+
+    @Test
+    void test_Stats() throws Exception{
+        String email = uniqueEmail();
+        String token = registerAndLogin(email, PASSWORD);
+        int idProject = createProject(token, "Project Test");
+        createCompleteTask(token, idProject, "Task Test", "Description for task", "2026-12-31T18:00:00");
+        int idTask2 = createCompleteTask(token, idProject, "Task Test", "Description for task", "2026-12-31T18:00:00");
+        int idTask3 = createCompleteTask(token, idProject, "Task Test", "Description for task", "2026-12-31T18:00:00");
+
+        String requestPatchDoing = """
+                {"status":"DOING"}
+                """;
+
+        mockMvc.perform(patch("/projects/{projectId}/tasks/{taskId}", idProject, idTask2)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestPatchDoing))
+                .andExpect(status().isOk());
+        mockMvc.perform(patch("/projects/{projectId}/tasks/{taskId}", idProject, idTask3)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestPatchDoing))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/projects/{projectId}/tasks/stats", idProject)
+                .header("Authorization", "Bearer " + token))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.todo").value(1))
+                .andExpect(jsonPath("$.doing").value(2))
+                .andExpect(jsonPath("$.done").value(0));
     }
 }
