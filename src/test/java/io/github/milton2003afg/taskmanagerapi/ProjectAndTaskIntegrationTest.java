@@ -50,4 +50,36 @@ public class ProjectAndTaskIntegrationTest extends AbstractIntegrationTest{
                 .getResponse()
                 .getContentAsString();
     }
+
+    @Test
+    void test_partialPatch() throws Exception{
+        String email = uniqueEmail();
+        String token = registerAndLogin(email, PASSWORD);
+        int idProject = createProject(token, "Project Test");
+        int idTask = createCompleteTask(token, idProject, "Task Test", "Description for task", "2026-12-31T18:00:00");
+
+        String requestPatch = """
+                {"status":"DOING"}
+                """;
+
+        mockMvc.perform(patch("/projects/{projectId}/tasks/{taskId}", idProject, idTask)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestPatch)
+                        .header("Authorization", "Bearer " + token))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Task Test"))
+                .andExpect(jsonPath("$.description").value("Description for task"))
+                .andExpect(jsonPath("$.status").value("DOING"))
+                .andExpect(jsonPath("$.dueDate").value("2026-12-31T18:00:00"));
+
+        mockMvc.perform(get("/projects/{projectId}/tasks/{taskId}", idProject, idTask)
+                .header("Authorization", "Bearer " + token))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Task Test"))
+                .andExpect(jsonPath("$.description").value("Description for task"))
+                .andExpect(jsonPath("$.status").value("DOING"))
+                .andExpect(jsonPath("$.dueDate").value("2026-12-31T18:00:00"));
+    }
 }

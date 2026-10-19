@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @SpringBootTest
@@ -77,4 +78,22 @@ public abstract class AbstractIntegrationTest {
                 .getContentAsString();
         return JsonPath.read(response, "$.id");
     }
+
+    protected Integer createCompleteTask(String token, long projectId, String title, String description, String dueDate)
+            throws Exception{
+        String request = """
+                {"title":"%s", "description":"%s", "dueDate": "%s"}
+                """.formatted(title, description, dueDate);
+        String response = mockMvc.perform(post("/projects/{projectId}/tasks", projectId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)
+                        .header("Authorization", "Bearer " + token))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return JsonPath.read(response, "$.id");
+    }
+
 }
