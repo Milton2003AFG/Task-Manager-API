@@ -9,14 +9,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
 @Service
 public class JwtService {
     private final JWSSigner signer;
+    private final String issuer;
+    private final Duration expiration;
 
-    public JwtService(@Value("${app.jwt.secret}") String secret) {
+    public JwtService(@Value("${app.jwt.secret}") String secret,
+                      @Value("${app.jwt.issuer}") String issuer,
+                      @Value("${app.jwt.expiration}")Duration expiration) {
+        this.issuer = issuer;
+        this.expiration = expiration;
         try {
             this.signer = new MACSigner(secret.getBytes(StandardCharsets.UTF_8));
         } catch (JOSEException ex) {
@@ -27,11 +34,11 @@ public class JwtService {
     public String generateToken(User user){
         try {
             JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                    .issuer("http://localhost:8080")
+                    .issuer(this.issuer)
                     .subject(user.getId().toString())
                     .claim("email", user.getEmail())
                     .issueTime(new Date())
-                    .expirationTime(Date.from(Instant.now().plusSeconds(1800)))
+                    .expirationTime(Date.from(Instant.now().plus(this.expiration)))
                     .build();
 
             JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
