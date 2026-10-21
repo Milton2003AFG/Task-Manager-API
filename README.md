@@ -1,4 +1,5 @@
 # Task Manager API
+![CI](https://github.com/Milton2003AFG/Task-Manager-API/actions/workflows/ci.yml/badge.svg)
 
 REST API for managing projects and tasks, built with Spring Boot.
 Each user can only access their own data.
