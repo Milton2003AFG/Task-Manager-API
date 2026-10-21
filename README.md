@@ -133,3 +133,53 @@ src/main/java/.../
 - OpenAPI documentation
 - Role-based authorization
 - Deployment to a cloud provider
+
+## Run with Docker
+
+Runs the API and PostgreSQL together, without installing a JDK.
+
+### 1. Create the `.env` file
+
+The API signs tokens with a secret read from `JWT_SECRET`
+(HS512 needs at least 64 bytes). Generate one:
+
+```bash
+echo "JWT_SECRET=$(openssl rand -base64 64 | tr -d '\n')" > .env
+```
+
+`.env` is git-ignored. See `.env.example` for the expected format.
+
+### 2. Start
+
+Stop any local run from your IDE first, since both use the same
+database volume.
+
+```bash
+podman compose -f compose.full.yaml up --build
+```
+
+With Docker, use `docker compose` instead of `podman compose`.
+
+### 3. Try it
+
+In another terminal:
+
+```bash
+curl -i -X POST http://localhost:8080/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"docker@test.com","password":"Abcdefghij12#"}'
+```
+
+You should get a `201 Created` response.
+
+### Stop
+
+```bash
+podman compose -f compose.full.yaml down      # keeps the data
+podman compose -f compose.full.yaml down -v   # also deletes the data
+```
+
+> The credentials in the Compose files (`secret`, `taskuser`) are for
+> local development only. In a real deployment, provide them through
+> environment variables or a secrets manager.
+
